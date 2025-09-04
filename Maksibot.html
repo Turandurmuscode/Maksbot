@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turnike Teknik Destek</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2e2b2b;
+            padding: 20px;
+        }
+
+        /* Floating Chat Button */
+        .chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .chat-button svg {
+            width: 24px;
+            height: 24px;
+            fill: rgb(255, 255, 255);
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 400px;
+            height: 600px;
+            background: rgb(43, 40, 40);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1001;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: rgb(19, 18, 18);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 8px;
+        }
+
+        .bot-message {
+            background: #f1f3f5;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .quick-btn {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            color: #1976d2;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-btn:hover {
+            background: #bbdefb;
+            transform: translateY(-1px);
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #dee2e6;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            background: #667eea;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .send-btn:hover {
+            background: #5a6fd8;
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 12px 16px;
+            background: #f1f3f5;
+            border-radius: 18px;
+            border-bottom-left-radius: 8px;
+            border: 1px solid #e9ecef;
+            font-style: italic;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .demo-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgb(16, 16, 235);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .demo-content h1 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center
+        }
+
+        .demo-content p {
+            color: #ffffff;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        @media (max-width: 480px) {
+            .chat-panel {
+                width: calc(100vw - 40px);
+                right: 20px;
+                left: 20px;
+                height: 550px;
+            }
+            
+            .quick-actions {
+                justify-content: center;
+            }
+            
+            .quick-btn {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-content">
+        <h1>MAKSİSOFT Turnike Teknik Destek Sistemi</h1>
+        <p>Sağ alt köşedeki sohbet butonuna tıklayarak teknik destek chatbot'una ulaşabilirsiniz.</p>
+        <p>Turnike sistemleriyle ilgili sorunlarınız için hemen yardım alın.</p>
+    </div>
+
+    <!-- Chat Button -->
+    <button class="chat-button" id="chatButton">
+        <svg viewBox="0 0 24 24">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4v3c0 .6.4 1 1 1 .2 0 .4-.1.6-.2L14.5 18H20c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 12H5v-2h8v2zm3-3H5V9h11v2zm0-3H5V6h11v2z"/>
+        </svg>
+    </button>
+
+    <!-- Chat Panel -->
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+            <div class="header-brand"></div>
+            <div class="brand-logo"></div>
+            <div class="chat-title">🔧 Turnike Teknik Destek</div>
+            <button class="close-btn" id="closeBtn">&times;</button>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                👋 Merhaba! Turnike sistemleriyle ilgili teknik sorunlarınızda size yardımcı olabilirim. 
+                <br><br>
+                Hızlı çözüm için aşağıdaki butonları kullanabilir veya sorununuzu detaylı yazabilirsiniz:
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="chatbot.quickQuestion('ekran çalışmıyor')">📺 Ekran</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('kart okumuyor')">💳 Kart</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('turnike açılmıyor')">🚪 Geçiş</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('sistem dondu')">🔄 Sistem</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('ağ sorunu')">📡 İnternet</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('test')">🔍 Test</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('performans')">⚡ Hız</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('bakım')">🧹 Bakım</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('acil durum')">🚨 Acil</button>
+                <button class="quick-btn" onclick="chatbot.quickQuestion('teknik destek')">📞 Destek</button>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            Teknik destek yazıyor...
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Sorununuzu buraya yazın... (örn: kart okumuyor)" maxlength="250">
+            <button class="send-btn" id="sendBtn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class TurnikeChatbot {
+            constructor() {
+                this.chatButton = document.getElementById('chatButton');
+                this.chatPanel = document.getElementById('chatPanel');
+                this.closeBtn = document.getElementById('closeBtn');
+                this.currentState = 'initial'; 
+                this.currentProblem = ''; 
+                this.chatInput = document.getElementById('chatInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                
+                this.knowledgeBase = [
+// Greeting and Initial Interaction
+                    {
+                        keywords: ['merhaba', 'selam', 'başla', 'yardım', 'destek', 'hello', 'hi'],
+                        response: '👋 Merhaba! Turnike sistemleriyle ilgili teknik sorunlarınızda size yardımcı olabilirim. Hızlı çözüm için aşağıdaki butonları kullanabilir veya sorununuzu detaylı yazabilirsiniz.',
+                        category: 'greeting'
+                    },
+
+                    // Display and Screen Issues
+                    {
+                        keywords: ['ekran', 'çalışmıyor', 'açılmıyor', 'görüntü', 'display', 'monitor', 'siyah', 'boş', 'Ekranda gökkuşağı var  '],
+                        response: '📺 **Ekran Görüntüleme Sorunu**\n\n**İlk kontroller:**\n• Güç adaptörünün 5V 3A değerinde ve sağlam takıldığından emin olun\n• HDMI kablosunun her iki ucundan da sıkıca takılı olduğunu kontrol edin\n• Monitör/TV\'nin doğru HDMI girişinde olduğunu ve açık olduğunu kontrol edin\n\n**Muhtemel çözümler:**\n• Farklı bir HDMI kablosu deneyin\n• Başka bir monitör/TV ile test edin\n• Sistem başlatma sırasında Raspberry Pi\'ın yeşil LED\'inin yanıp söndüğünü gözlemleyin\n\n**Kalıcı çözüm:** SD kartınız bozulmuş olabilir. Pi3/Pi4 için özel hazırlanmış turnike yazılımının yeniden yüklenmesi gerekebilir.',
+                        category: 'hardware'
+                    },
+                    // Card and QR Code Reading Issues
+                    {
+    keywords: ['kart', 'okumuyor', 'qr', 'okuyucu', 'reader', 'tanımıyor', 'geçmiyor', 'rfid'],
+    response: ' 💳 **Kart ve QR Kod Okuma Sorunu**\n\n• Kartınızı okuyucuya doğru şekilde yaklaştırdığınızdan emin olun. En uygun okuma mesafesi 2-5 cmdir.<img src="https://i.ibb.co/L5hY5hL/rfid-reading-distance.png" alt="Kart okuma mesafesi" style="max-width:100%; border-radius:8px; margin-top:10px;">\n• Ayrıca, kartın temiz ve hasarsız olduğundan emin olun.',
+    category: 'reader'
+},
+ // Power and Electrical Issues
+{ 
+    keywords: ['adaptör', 'güç', 'elektrik', 'Cihaz gitti', 'açılmıyor', 'led', 'ışık', 'kırmızı led', 'yeşil led'],
+    response: '⚡ **Güç Beslemesi Sorunu**<br><br>**1.** Raspberry Pi üzerindeki kırmızı güç LEDinin sürekli yandığından emin olun. LEDin konumu için görsele bakabilirsiniz:<img src="https://i.ibb.co/3s5W8V5/rpi-power-led.png" alt="Raspberry Pi Güç LEDi style="max-width:100%; border-radius:8px; margin-top:10px;"><br><br>**2.** Güç adaptörünün **5V 3A** değerinde olduğundan emin olun.<br>Sorun devam ederse başka bir adaptör deneyin.',
+    category: 'power'
+},                  
+                    
+                    // Network and Internet Issues
+                    {
+                        keywords: ['internet', 'ağ', 'network', 'wifi', 'bağlantı', 'modem', 'ip', 'ethernet', 'lan'],
+                        response: '📡 **İnternet Bağlantısı Sorunu**\n\n**Ethernet bağlantısı için:**\n• Ethernet kablosunun her iki ucunun da sıkıca takılı olduğunu kontrol edin\n• Router/modem üzerindeki bağlantı ışığının yandığını kontrol edin\n• Başka bir ethernet kablosu deneyin\n\n**Ağ yapılandırması kontrolü:**\n• Turnike cihazı ile modem/router\'ın aynı ağ üzerinde olduğundan emin olun\n• Diğer cihazların internet bağlantısını test edin\n• Modem/router\'ı 30 saniye kapatıp tekrar açın\n\n**Yaygın problemler:**\n• IP adresi çakışması (aynı ağda aynı IP\'ye sahip iki cihaz)\n• DNS sorunu (google.com gibi sitelere erişim yok)\n• Güvenlik duvarı engelleri\n\n**Test:** Bilgisayarınızdan turnike cihazının IP adresine ping atarak ulaşılabilirliği test edebilirsiniz.\n\n  <img src="https://projects-static.raspberrypi.org/projects/raspberry-pi-getting-started/c66d8a79f813edd87ee9626e86f5cfbffafbf3e6/en/images/pi-ethernet.png" alt="Ethernet Bağlantısı" style="max-width:100%; border-radius:8px; margin-top:10px;">',
+                        category: 'network'
+                    },
+                    
+                    // Turnstile Mechanical Issues
+                    {
+                        keywords: ['turnike', 'açılmıyor', 'geçmiyor', 'kapı', 'motor', 'hareket', 'döner', 'kollar'],
+                        response: '🚪 **Turnike Geçiş Engellenme Sorunu**\n\n**Kullanıcı bazlı kontroller:**\n• Üyelik durumunuzun aktif olduğunu teyit ettirin\n• Üyelik sürenizin dolmadığından emin olun\n• Geçiş yetkinizin bu saatlerde aktif olduğunu kontrol ettirin\n\n**Mekanik kontroller:**\n• Turnike kollarının hareket alanında fiziksel engel olup olmadığını kontrol edin\n• Kolların arasında sıkışan nesne var mı bakın\n• Manuel açma/kapatma düğmesi varsa test edin\n\n**Sensor kontrolleri:**\n• Geçiş sensörlerinin önünde engel olmadığından emin olun\n• Sensör bölgelerindeki kir/toz birikimini temizleyin\n\n**Acil çözüm:** Çoğu turnikede manuel geçiş modu bulunur. Yetkili kişiden bu modu aktif etmesini isteyebilirsiniz.',
+                        category: 'mechanical'
+                    },
+                    
+                    // membership and Authorization Issues
+                    {
+                        keywords: ['üyelik', 'süresi', 'dolmuş', 'expired', 'membership', 'yetki', 'izin', 'access'],
+                        response: '👤 **Üyelik ve Yetkilendirme Sorunu**\n\n**Kontrol edilmesi gerekenler:**\n• Üyeliğinizin sistemde **aktif** durumda olduğu\n• Geçiş yetkisinin **bu lokasyon** için tanımlı olduğu\n• **Zaman kısıtlaması** olup olmadığı (belirli saatler arası geçiş)\n• **Hafta sonu/tatil günü** kısıtlaması bulunup bulunmadığı\n\n**Yaygın durumlar:**\n• Üyelik süresi otomatik yenilenmemiş olabilir\n• Ödeme problemi nedeniyle üyelik askıya alınmış olabilir\n• Geçici olarak sistem yöneticisi tarafından erişim kısıtlanmış olabilir\n\n**Çözüm için:** Sistem yöneticiniz ile iletişime geçerek üyelik durumunuzun kontrolünü ve gerekirse yenilenmesini talep edin.\n\n**Not:** Grup yetkilendirmesi kullanan sistemlerde, grubunuzun yetkilerinde değişiklik yapılmış olabilir.',
+                        category: 'membership'
+                    },
+                    
+                    // System Freeze and Performance Issues
+                    {
+                        keywords: ['sistem', 'dondu', 'freeze', 'kitlendi', 'yanıt', 'vermiyor', 'yavaş', 'kasıyor'],
+                        response: '🔄 **Sistem Donması ve Performans Sorunu**\n\n**Anında çözüm:**\n• Cihazı **güvenli şekilde yeniden başlatın** (güç butonunu 5 saniye basılı tutun)\n• Yeniden başlatma sonrası 2-3 dakika bekleyip normal çalışıp çalışmadığını gözlemleyin\n\n**Performans problemleri:**\n• SD kart ömrü dolmuş olabilir (sürekli yazma-okuma nedeniyle)\n• Raspberry Pi aşırı ısınmış olabilir (soğutma fanı kontrolü)\n• Güç beslemesi yetersiz olabilir (adaptör kontrolü)\n\n**Kalıcı çözüm için gerekli:**\n• **Profesyonel Pi3/Pi4 turnike yazılımı** yeniden kurulumu\n• SD kart yedekleme ve değiştirme işlemi\n• Sistem optimizasyonu ve güncelleme\n\n**Kritik:** Sistem sık sık donuyorsa, bu donanım arızasının işareti olabilir. Teknik servisle iletişime geçmenizi öneririz.',
+                        category: 'system'
+                    },
+                    
+                    // Database and Integration Issues
+                    {
+                        keywords: ['veritabanı', 'database', 'entegrasyon', 'senkron', 'crm', 'api', 'bağlantı'],
+                        response: '🔗 **Veritabanı Senkronizasyon Sorunu**\n\n**Kullanıcı için gözlemlenebilir belirtiler:**\n• Yeni eklenen üyelerin sistemde görünmemesi\n• Üyelik güncellemelerinin geç yansıması\n• Geçiş loglarının merkezi sistemde eksik görünmesi\n\n**Temel kontroller:**\n• İnternet bağlantısının stabil olduğundan emin olun\n• Sistem saatinin doğru olup olmadığını kontrol edin\n• Merkezi sunucunun erişilebilir durumda olduğunu teyit edin\n\n**Senkronizasyon sorunları:**\n• CRM sistemi ile turnike yazılımı arasındaki veri alışverişi sekteye uğramış olabilir\n• API bağlantı anahtarlarının süresi dolmuş olabilir\n• Veritabanı bağlantı timeout süreleri yetersiz olabilir\n\n**Çözüm:** Bu tür entegrasyon sorunları sistem yöneticisi müdahalesi gerektirir. Sorunu detaylarıyla bildirerek profesyonel destek talep edin.',
+                        category: 'database'
+                    },
+                    
+                    // Hardware Issues
+                    {
+                        keywords: ['donanım', 'hardware', 'arıza', 'sensör', 'kablo', 'bağlantı', 'devre'],
+                        response: '🔧 **Donanım Bileşeni Arızası**\n\n**Gözle görülebilir kontroller:**\n• Tüm kablo bağlantılarının sıkıca takılı olduğunu kontrol edin\n• Kabloların ezilme, koparılma veya hasar görüp görmediğini inceleyin\n• Bağlantı noktalarında korozyon, nem veya kir birikimi olup olmadığını kontrol edin\n\n**Sensor ve motor kontrolleri:**\n• Geçiş sensörlerinin LED ışıklarının yanıp yanmadığını gözlemleyin\n• Motor seslerinin normal olup olmadığını dinleyin (anormal gıcırdama, zorlanma sesi)\n• Turnike kollarının mekanik hareketinin akıcı olup olmadığını test edin\n\n**Kritik uyarı:** Elektriksel ölçüm ve devre analizi gerektiren arızalar profesyonel müdahale gerektirir.\n\n**Önerimiz:** Donanım arızası şüphesinde cihazı kapatıp, sorunu detayıyla bildirerek teknik servis desteği alın. Yetkisiz müdahale garantiyi geçersiz kılabilir.',
+                        category: 'hardware'
+                    },
+                    
+                    // Sd card İssues 
+                    {
+                        keywords: ['sd', 'kart', 'memory', 'hafıza', 'corrupt', 'bozuk', 'format'],
+                        response: '💾 **SD Kart Arızası (Pi3/Pi4 Sistemi)**\n\n**Arıza belirtileri:**\n• Sistem açılış sırasında takılıp kalma\n• Beklenmedik yeniden başlatmalar\n• Veri kaybı veya ayarların sıfırlanması\n• Yeşil LED\'in düzensiz yanıp sönmesi\n\n**SD kart kontrolü:**\n• SD kartın fiziksel hasarı olup olmadığını inceleyin (çatlak, eğilme)\n• SD kart yuvası temiz ve hasar görmemiş olmalı\n• **Class 10** veya daha hızlı SD kart kullanılmalı (performans için kritik)\n\n**Pi3/Pi4 için özel durum:**\n• Turnike yazılımı **Pi3 ve Pi4 için optimize edilmiş** özel imaj gerektirir\n• Standart Raspberry Pi OS kullanımı sistem instabilitesine neden olur\n• Özel GPIO konfigürasyonu ve driver\'lar bulunur\n\n**Profesyonel çözüm gerekli:** SD kart yenileme işlemi, özel turnike yazılımının kurulumu ve sistem konfigürasyonu teknik bilgi gerektirir. Yetkili servis desteği almanızı önemle tavsiye ederiz.',
+                        category: 'storage'
+                    },
+                    
+                    // Sound and Audio Issues
+                    {
+                        keywords: ['ses', 'alarm', 'buzzer', 'hoparlör', 'uyarı', 'sound', 'audio'],
+                        response: '🔊 **Ses Sistemi ve Uyarı Sorunu**\n\n**Ses çıkmıyor ise:**\n• Hoparlör/buzzer bağlantılarının gevşek olup olmadığını kontrol edin\n• Ses seviyesi ayarlarının kapatılmış olup olmadığını kontrol edin\n• Hoparlörün fiziksel hasarı olup olmadığını gözlemleyin\n\n**Ses kalitesi problemleri:**\n• Parazit, çatlama sesleri kablo arızasını işaret edebilir\n• Çok yüksek/düşük ses problemi amplifikatör ayar sorunu olabilir\n• Anlaşılmaz ses çıkması codec/yazılım problemi olabilir\n\n**Test yöntemleri:**\n• Bilinen çalışır durumda başka bir hoparlör bağlayın\n• Farklı uyarı tonlarını test edin (geçiş onayı, hata sesi vb.)\n\n**Sistem entegrasyonu:** Ses sistemi turnike yazılımı ile entegre çalışır. Ses dosyalarının bozulması veya codec problemleri yazılım güncellemesi gerektirebilir.',
+                        category: 'audio'
+                    },
+                    
+                    // Software Updates and Versions - Pi3/Pi4 özel
+                    {
+                        keywords: ['güncelleme', 'update', 'yazılım', 'software', 'version', 'sürüm'],
+                        response: '🔄 **Turnike Yazılımı Güncelleme (Pi3/Pi4)**\n\n**Güncelleme öncesi hazırlık:**\n• Mevcut sistem versiyonunu not alın\n• İnternet bağlantısının stabil olduğundan emin olun\n• Güncelleme sırasında elektrik kesintisi olmaması için UPS kullanın\n\n**Pi3/Pi4 özel durumlar:**\n• **Pi3 ve Pi4 farklı yazılım versiyonları** kullanır (donanım uyumluluğu)\n• GPIO pin konfigürasyonları model bazında değişiklik gösterir\n• Turnike motor/sensör driver\'ları modele özel optimize edilmiştir\n\n**Güncelleme türleri:**\n• **Otomatik güncellemeler:** Sistem otomatik olarak küçük güncellemeleri alır\n• **Uzaktan güncelleme:** Teknik ekip tarafından uzaktan yapılabilir\n• **Manuel güncelleme:** USB/SD kart ile yapılır (büyük güncellemeler için)\n\n**Önemli uyarı:** Yanlış Pi modeli için yazılım yüklenmesi sistem arızasına neden olur. Güncelleme işlemlerinin mutlaka yetkili teknik personel tarafından yapılması önerilir.',
+                       category: 'software'
+                   },
+                   
+                   // Tech Support Contact
+                   {
+                       keywords: ['destek', 'support', 'yardım', 'help', 'iletişim', 'telefon', 'arıyorum'],
+                       response: this.getSupportContact(),
+                       category: 'support'
+                   },
+                   
+                   //Raspberry pi secret and optimization
+                   {
+                       keywords: ['raspberry', 'pi3', 'pi4', 'gpio', 'pin', 'cpu', 'sıcaklık', 'ısınma'],
+                       response: '🍓 **Raspberry Pi Donanım Optimizasyonu**\n\n**Sıcaklık yönetimi:**\n• Pi3: Normal çalışma sıcaklığı 65°C altında olmalı\n• Pi4: Daha güçlü işlemci nedeniyle 70°C altında tutulmalı\n• Aşırı ısınma durumunda sistem otomatik olarak hızını düşürür (throttling)\n\n**Soğutma çözümleri:**\n• Aktif soğutma fanının çalışıp çalışmadığını kontrol edin\n• Hava sirkülasyonunun engellenmediğinden emin olun\n• Heat sink\'lerin doğru monte edildiğini kontrol edin\n\n**GPIO ve Pin yönetimi:**\n• Turnike sistemi özel GPIO pinleri kullanır (motor, sensör, okuyucu için)\n• Pin konfigürasyonu Pi3 ve Pi4 arasında farklılık gösterebilir\n• GPIO pin hasarı tüm sistem işlevselliğini etkileyebilir\n\n**Boot ve konfigürasyon:**\n• Sistem özgün turnike yazılımı ile optimize edilmiştir\n• Hardware revision otomatik olarak algılanır\n• Boot sırasında sistem otomatik donanım testlerini gerçekleştirir\n\n**Performans karşılaştırması:**\n• **Pi4:** Daha hızlı işlem, daha fazla RAM, USB 3.0 desteği\n• **Pi3:** Daha düşük güç tüketimi, proven stability\n• **Önerilen:** Yoğun kullanım için Pi4, sürekli çalışma için Pi3\n\n**Sistem durumu kontrolü:** Kırmızı LED sürekli yanıyorsa güç OK, yeşil LED yanıp sönüyorsa SD kart aktivitesi normal demektir.',
+                       category: 'raspberry'
+                   },
+
+                   // Security and Access Control
+                   {
+                       keywords: ['güvenlik', 'security', 'şifre', 'password', 'hack', 'yetkisiz', 'erişim'],
+                       response: '🔐 **Güvenlik ve Erişim Kontrol Sistemi**\n\n**Normal güvenlik işleyişi:**\n• Her geçiş denenme logu tutulur ve merkezi sisteme gönderilir\n• Yetkisiz erişim denemelerinde otomatik uyarı sistemi devreye girer\n• Sistem admin şifresi düzenli olarak değiştirilmelidir\n\n**Şüpheli durumlar:**\n• Art arda yapılan başarısız geçiş denemeleri\n• Sistem saati manipülasyonu girişimleri\n• Bilinmeyen kart/QR kodlarla sürekli deneme\n\n**Güvenlik önlemleri:**\n• Fiziksel erişimi olan kişiler sınırlı olmalı\n• Sistem paneli kilitli bir dolap içinde tutulmalı\n• Ağ trafiği güvenli kanallardan geçmelidir\n\n**Acil güvenlik modu:** Sistem yöneticisi uzaktan tüm erişimleri durdurabilir ve manuel kontrol moduna geçebilir.',
+                       category: 'security'
+                   },
+
+                   // Cleanup and Maintenance
+                   {
+                       keywords: ['bakım', 'maintenance', 'temizlik', 'cleaning', 'servis', 'periyodik'],
+                       response: '🧹 **Düzenli Bakım ve Temizlik Rehberi**\n\n**Haftalık bakım (kullanıcı yapabilir):**\n• Kart okuyucu yüzeyini kuru bezle temizleyin\n• Turnike kollarının hareket alanını kontrol edin\n• Sensor bölgelerindeki toz birikimini temizleyin\n• Ekran yüzeyini özel monitör bezi ile silin\n\n**Aylık kontroller:**\n• Tüm kablo bağlantılarının sıkılığını kontrol edin\n• Havalandırma alanlarının temiz olduğundan emin olun\n• Ses sistemi çalışmasını test edin\n• Manuel geçiş düğmelerinin çalıştığını kontrol edin\n\n**Profesyonel bakım (teknik servis):**\n• 6 ayda bir kapsamlı sistem kontrolü\n• Yazılım güncellemeleri ve güvenlik yamaları\n• Mekanik parçaların yağlanması ve ayarlanması\n• Elektronik bileşenlerin test edilmesi\n\n**Önemli:** Su ve kimyasal temizlik maddeleri kullanmayın. Sadece kuru veya hafif nemli bez kullanın.',
+                       category: 'maintenance'
+                   },
+
+                   // Emergency
+                   {
+                       keywords: ['acil', 'emergency', 'yangın', 'elektrik', 'kesinti', 'panik', 'tahliye'],
+                       response: '🚨 **Acil Durum ve Tahliye Prosedürleri**\n\n**Elektrik kesintisi:**\n• UPS sistemi devreye girer (yaklaşık 2-4 saat yedek güç)\n• Otomatik olarak "açık geçiş" moduna geçer\n• Tüm turnike kolları serbest hareket eder\n• Normal elektrik geldiğinde sistem otomatik başlar\n\n**Yangın alarmı durumunda:**\n• Yangın algılama sistemi ile entegre sistemler otomatik açılır\n• Manuel acil açma butonu ile tüm turnikeler açılabilir\n• Sistem tahliye moduna geçer (sadece çıkış yönü aktif)\n\n**Sistem arızası durumunda:**\n• Mekanik manuel açma kolu kullanılabilir\n• Acil durum anahtarı ile sistem bypass edilebilir\n• Güvenlik görevlisi manuel kontrol yapabilir\n\n**İletişim:** Acil durumlarda **+90 212 555 0123** numarasını arayın. 7/24 acil destek hattımız aktiftir.\n\n**Yasal gereklilik:** Tüm acil çıkış yolları her zaman açık ve erişilebilir durumda tutulmalıdır.',
+                       category: 'emergency'
+                   },
+
+                   // Sistem Diagnostiği ve Test
+                   {
+                       keywords: ['test', 'diagnostik', 'kontrol', 'check', 'durum', 'status', 'çalışıyor', 'test et'],
+                       response: '🔍 **Sistem Tanılama ve Test Rehberi**\n\n**Hızlı sistem kontrolü:**\n• **Güç durumu:** Kırmızı LED sürekli yanıyor mu?\n• **Aktivite durumu:** Yeşil LED ara ara yanıp sönüyor mu?\n• **Ekran durumu:** Turnike ana ekranı görünüyor mu?\n• **Ses testi:** Test butonuna bastığınızda ses geliyor mu?\n\n**Bileşen testleri:**\n• **Kart okuyucu testi:** Bilinen çalışır kartla test yapın\n• **QR okuyucu testi:** Test QR kodunu okutmayı deneyin\n• **Motor testi:** Manuel test düğmesi ile motor sesini dinleyin\n• **Sensor testi:** Geçiş alanına nesne koyup sensör tepkisini gözlemleyin\n\n**Ağ bağlantısı testi:**\n• Diğer cihazlardan turnike IP adresine ping atın\n• İnternet bağlantısını başka cihazla test edin\n• Router/modem bağlantı ışıklarını kontrol edin\n\n**Profesyonel tanılama:** Kapsamlı sistem analizi için uzaktan bağlantı ile detaylı teşhis yapabiliriz.',
+                       category: 'diagnostic'
+                   },
+
+                   // Performans İzleme  
+                   {
+                       keywords: ['performans', 'performance', 'yavaş', 'hız', 'optimization', 'optimize'],
+                       response: '⚡ **Sistem Performansı ve Optimizasyon**\n\n**Performans göstergeleri:**\n• **Kart okuma süresi:** 1-2 saniye normal\n• **QR okuma süresi:** 2-3 saniye normal  \n• **Turnike açılma süresi:** 1 saniye normal\n• **Sistem başlangıç süresi:** 30-45 saniye normal\n\n**Performansı etkileyen faktörler:**\n• SD kart kalitesi ve yaşı (Class 10+ önerilen)\n• CPU sıcaklığı (70°C üzeri performans düşürür)\n• RAM kullanımı (Pi3: 1GB, Pi4: 2-4-8GB seçenekleri)\n• Ağ bağlantısı hızı ve stability\n\n**Optimizasyon önerileri:**\n• **SSD kullanımı:** USB SSD Pi4 için büyük performans artışı\n• **Soğutma:** Aktif soğutma sistemi önerilen\n• **Güç:** Kaliteli 5V 3A adaptör kritik\n• **Ağ:** Gigabit ethernet Pi4 için önerilen\n\n**Pi3 vs Pi4 performans:**\n• Pi4: %300 daha hızlı işlemci, USB 3.0, Gigabit Ethernet\n• Pi3: Daha az güç tüketimi, kanıtlanmış kararlılık',
+                       category: 'performance'
+                   }
+               ];
+               
+               this.initEventListeners();
+               window.chatbot = this; // Global erişim için
+           }
+
+           initEventListeners() {
+               this.chatButton.addEventListener('click', () => this.toggleChat());
+               this.closeBtn.addEventListener('click', () => this.closeChat());
+               this.sendBtn.addEventListener('click', () => this.sendMessage());
+               this.chatInput.addEventListener('keypress', (e) => {
+                   if (e.key === 'Enter') this.sendMessage();
+               });
+               
+               // Close chat when clicking outside
+               document.addEventListener('click', (e) => {
+                   if (!this.chatPanel.contains(e.target) && !this.chatButton.contains(e.target)) {
+                       if (this.chatPanel.style.display === 'flex') {
+                           this.closeChat();
+                       }
+                   }
+               });
+           }
+
+           getSupportContact() {
+               return `📞 **Profesyonel Teknik Destek Merkezi**
+
+**🕐 Çalışma Saatleri:**
+- **Hafta içi:** 08:00 - 18:00 (Uzman teknik ekip)
+- **Cumartesi:** 10:00 - 15:00 (Sınırlı destek)
+- **Acil durumlar:** 7/24 kesintisiz hizmet
+
+**📱 İletişim Kanalları:**
+- **Acil Destek Hattı:** +90 212 555 0123
+- **WhatsApp Destek:** +90 533 555 0123  
+- **E-posta:** Maksisoft@destek.com
+
+**💻 Uzaktan Destek:**
+- Alpemix ile anlık müdahale
+- Uzaktan yazılım güncelleme
+- Canlı sistem monitoring
+- Hızlı problem tespiti
+- Yazılım optimizasyonu
+
+**🔧 Yerinde Teknik Servis:**
+- **Yedek parça stoku** her zaman hazır
+- Hızlı müdahale garantisi
+- Donanım arızalarında hızlı değişim
+- Uzman teknisyenler
+- Hızlı arıza tespiti
+
+**📋 Destek talebinde belirtmeniz gerekenler:**
+- Ariza detayı ve ne zaman başladığı
+- Hata kodları (varsa ekranda görünen)
+- Kullandığınız turnikenin modeli (Fotoğraf)
+- Turnikenin hatasının fotoğrafı (varsa)
+
+**🎯 Uzman ekibimiz Pi3/Pi4 tabanlı turnike sistemlerinde 15+ yıl deneyimlidir.**`;
+           }
+
+           toggleChat() {
+               if (this.chatPanel.style.display === 'flex') {
+                   this.closeChat();
+               } else {
+                   this.openChat();
+               }
+           }
+
+           openChat() {
+               this.chatPanel.style.display = 'flex';
+               this.chatInput.focus();
+           }
+
+           closeChat() {
+               this.chatPanel.style.display = 'none';
+           }
+
+           quickQuestion(question) {
+               this.addMessage(question, 'user');
+               this.showTyping();
+               
+               setTimeout(() => {
+                   this.hideTyping();
+                   const response = this.getBotResponse(question);
+                   this.addMessage(response, 'bot');
+               }, 800 + Math.random() * 700);
+           }
+
+           sendMessage() {
+               const message = this.chatInput.value.trim();
+               if (!message) return;
+
+               this.addMessage(message, 'user');
+               this.chatInput.value = '';
+               this.sendBtn.disabled = true;
+               
+               // Show typing indicator
+               this.showTyping();
+               
+               // Simulate bot response delay
+               setTimeout(() => {
+                   this.hideTyping();
+                   const response = this.getBotResponse(message);
+                   this.addMessage(response, 'bot');
+                   this.sendBtn.disabled = false;
+               }, 1200 + Math.random() * 1000);
+           }
+
+           addMessage(text, sender) {
+               const messageDiv = document.createElement('div');
+               messageDiv.classList.add('message');
+               messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+               
+               // Format bot messages with better HTML rendering
+               if (sender === 'bot') {
+                   messageDiv.innerHTML = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+               } else {
+                   messageDiv.textContent = text;
+               }
+               
+               this.chatMessages.appendChild(messageDiv);
+               this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+           }
+
+           showTyping() {
+               this.typingIndicator.style.display = 'block';
+               this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+           }
+
+           hideTyping() {
+               this.typingIndicator.style.display = 'none';
+           }
+
+getBotResponse(userMessage) {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    //---------------------------------------------------------
+    // Dynamic Flow Control Section
+    // Handles multi-step troubleshooting flows.
+    //---------------------------------------------------------
+
+    // Power issue flow
+    if (this.currentState === 'power_issue_step1') {
+        if (lowerMessage.includes('evet') || lowerMessage.includes('yes')) {
+            this.currentState = 'power_issue_step2';
+            return '✅ Anlaşıldı. Peki, Raspberry Pi üzerindeki kırmızı güç LED’i sürekli yanıyor mu? <br><br> (evet/hayır)';
+        } else if (lowerMessage.includes('hayır') || lowerMessage.includes('no')) {
+            this.currentState = 'initial';
+            return 'O zaman adaptörünüzün tam olarak takılı olduğundan emin olun ve farklı bir priz deneyin. Eğer sorun çözülmezse, lütfen destek ekibimizle iletişime geçin.';
+        }
+    }
+    
+    if (this.currentState === 'power_issue_step2') {
+        if (lowerMessage.includes('evet') || lowerMessage.includes('yes')) {
+            this.currentState = 'initial';
+            return 'Harika! O zaman adaptörünüz çalışıyor. Sorun HDMI veya SD kartta olabilir. Lütfen ekran sorunları bölümüne bakın veya SD kartınızı kontrol edin.';
+        } else if (lowerMessage.includes('hayır') || lowerMessage.includes('no')) {
+            this.currentState = 'initial';
+            return `❌ **Sorun Bulundu: Güç Kaynağı**<br><br>
+                Eğer kırmızı LED yanmıyorsa, bu durum ya adaptörünüzün bozuk olduğu ya da Pi'de donanım sorunu olduğu anlamına gelir. Ne yazık ki SD kartınız bozulmuş olabilir. Bu durumda, profesyonel destek almanız gerekir.`;
+        }
+    }
+
+    // Slow QR/Card reading flow
+    if (this.currentState === 'slow_qr_step1') {
+        if (lowerMessage.includes('evet') || lowerMessage.includes('yes')) {
+            this.currentState = 'initial';
+            return 'O halde sorun internet bağlantınızda değil. Lütfen cihazı yeniden başlatmayı deneyin. Sorun devam ederse, bu durum donanımsal bir arıza olabilir. Profesyonel destek için bize ulaşın.';
+        } else if (lowerMessage.includes('hayır') || lowerMessage.includes('no')) {
+            this.currentState = 'initial';
+            return 'İnternet bağlantınızda sorun olabilir. Lütfen modeminizi ve turnikeyi yeniden başlatın. Bağlantı sağlandıktan sonra tekrar deneyin.';
+        }
+    }
+
+    // Mechanical error flow
+    if (this.currentState === 'mechanical_error_step1') {
+        if (lowerMessage.includes('evet') || lowerMessage.includes('yes')) {
+            this.currentState = 'initial';
+            return 'O zaman mekanik bir arıza olabilir. Lütfen turnikenin kollarını manuel olarak kontrol edin, herhangi bir sıkışma veya engel var mı bakın. Sorun devam ediyorsa, teknik ekibimizle görüşmeniz gerekir.';
+        } else if (lowerMessage.includes('hayır') || lowerMessage.includes('no')) {
+            this.currentState = 'initial';
+            return '❌ **Sorun Bulundu: Kablo bağlantısı**<br><br>Lütfen tüm kabloları sıkıca yerine oturtun. Kablolar takılı değilse turnike düzgün çalışmaz. Bu işlem sorununuzu çözmezse bize ulaşın.';
+        }
+    }
+
+    // IP access issue flow
+    if (this.currentState === 'ip_access_step1') {
+        if (lowerMessage.includes('evet') || lowerMessage.includes('yes')) {
+            this.currentState = 'initial';
+            return 'Eğer tarama sonucunda Raspberry Pi\'ın IP adresini bulduysanız ama hala erişemiyorsanız, ağ ayarlarında bir sorun olabilir. Lütfen ağ yöneticinize danışın veya destek ekibimizle iletişime geçin.';
+        } else if (lowerMessage.includes('hayır') || lowerMessage.includes('no')) {
+            this.currentState = 'initial';
+            return `❌ **Sorun Bulundu: IP Adresi**<br><br>
+                Eğer Advanced IP Scanner ile cihazın IP adresini bulamıyorsanız, turnikenin ağ bağlantısı koptu demektir. <br><br>
+                **Çözüm:** Ethernet kablosunun takılı olduğundan ve modemin çalıştığından emin olun. Hızlı çözüm için cihazı ve modemi yeniden başlatmayı deneyin.
+                `;
+        }
+    }
+
+    //---------------------------------------------------------
+    //  Initial Keyword Detection Section
+    // Handles initial keyword detection and dynamic flow initiation.
+    //---------------------------------------------------------
+    for (const item of this.knowledgeBase) {
+        for (const keyword of item.keywords) {
+            if (lowerMessage.includes(keyword)) {
+            
+                if (keyword === 'güç' || keyword === 'power' || keyword === 'adaptör') {
+                    this.currentProblem = 'Güç Sorunu';
+                    this.currentState = 'power_issue_step1';
+                    return 'Güç adaptörünüzün tam olarak takılı olduğundan emin misiniz? <br><br> (evet/hayır)';
+                }
+                if (keyword === 'yavaş' || keyword === 'geç' || keyword === 'okumuyor') {
+                    this.currentProblem = 'QR/Kart Okuma Sorunu';
+                    this.currentState = 'slow_qr_step1';
+                    return 'Cihazın internet bağlantısı düzgün çalışıyor mu? <br><br> (evet/hayır)';
+                }
+                if (keyword === 'mekanik' || keyword === 'sıkıştı' || keyword === 'açılmıyor') {
+                    this.currentProblem = 'Mekanik Sorun';
+                    this.currentState = 'mechanical_error_step1';
+                    return 'Turnikenin kablo bağlantılarının sağlam olduğunu kontrol ettiniz mi? <br><br> (evet/hayır)';
+                }
+                if (keyword === 'erişemiyorum' || keyword === 'bağlanamıyorum' || keyword === 'ip') {
+                    this.currentProblem = 'Ağa Erişim Sorunu';
+                    this.currentState = 'ip_access_step1';
+                    return 'Advanced IP Scanner gibi bir programla cihazın IP adresini bulabiliyor musunuz? <br><br> (evet/hayır)';
+                }
+                
+                // Other keywords lead to direct responses
+                return item.response;
+            }
+        }
+    }
+    
+    // Fallback response if no keywords matched
+    return `
+Bu konuda standart çözümlerimizde eşleşme bulamadım. Sorununuz daha özel bir analiz gerektirebilir.
+
+**🎯 Önerdiğim adımlar:**
+- Sorununuzu daha detaylandırabilir misiniz?
+- Hangi işlem sırasında sorun oluşuyor?
+- Hata mesajı var mı? Varsa tam olarak ne diyor?
+- Sorun ne zaman başladı? (bugün, dün, geçen hafta?)
+
+**⚡ Hızlı çözüm için yukarıdaki kategorileri deneyin:**
+📺 Ekran • 💳 Kart Okuma • 🚪 Geçiş • 📡 İnternet • 🔄 Sistem
+
+**📞 Profesyonel destek için:**
+- **Acil:** +90 212 555 0123
+- **WhatsApp:** +90 533 555 0123
+- **E-posta:** teknik@turnikedestek.com
+
+**⏰ Ortalama yanıt süremiz:** 
+- Telefon: 30 saniye
+- WhatsApp: 2 dakika  
+- E-posta: 15 dakika
+
+Pi3/Pi4 uzmanlarımız sorununuzu hızla çözecektir! 🚀`;
+           }
+       }
+
+       // Initialize chatbot when page loads
+       document.addEventListener('DOMContentLoaded', () => {
+           new TurnikeChatbot();
+       });
+   </script>
+</body>
+</html>
